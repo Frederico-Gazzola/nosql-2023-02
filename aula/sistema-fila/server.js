@@ -8,7 +8,7 @@ app.use(express.static('public'));
 app.set('view engine', 'ejs');
 app.set('views', './views');
 
-var senha
+var senhaAtual = 100;
 
 const cli = redis.createClient({
     password: 'F7kR7SyBep4Cg3groYLvwDdNIB3nPzFb',
@@ -19,7 +19,7 @@ const cli = redis.createClient({
 });
 
 app.get("/", (req, res) => {
-    res.render('index', { senha: 95, fila: "" });
+    res.render('index', { senha: senhaAtual, fila: "" });
 });
 
 
@@ -27,9 +27,15 @@ app.get("/proximo", (req, res) => {
     res.status(200).send('Ok');
 });
 
-app.get("/retirar", (req, res) => {
-    res.status(200).send('Ok');
+app.get("/retirar", async (req, res) => {
+
+    await cli.rPush('Senha', "- " + senhaAtual);
+    senhaAtual++;
+    const fila = await cli.lIndex('Senha', 0)
+    console.log(fila);
+    res.render('index', { senha: senhaAtual, fila:  "-" + fila});
 });
+
 
 app.listen(8000, async () => {
     await cli.connect()
